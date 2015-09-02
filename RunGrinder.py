@@ -13,10 +13,6 @@ side = 'left'
 movement = 'forward_reaching'
 
 if __name__ == '__main__':
-    #for gd in [0, 100, 200]:
-    #    for gs in [0, 100, 200]:
-    #for gd in [0]:
-    #   for gs in [0]:
     path = path_root
     files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) if not f.startswith('.')]
     for f in files:
