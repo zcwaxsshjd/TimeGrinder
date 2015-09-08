@@ -6,7 +6,7 @@ from matplotlib.figure import Figure
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
-    NavigationToolbar2QTAgg as NavigationToolbar)
+    NavigationToolbar2QT as NavigationToolbar)
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -85,9 +85,11 @@ class Watcher(QMainWindow):
 
         # Other GUI controls
         #
-        self.textbox = QTextEdit("""{"analystName": "Minos Niu",
-                                     "gammaDyn": 100,
-                                     "gammaSta": 100}
+        # self.textbox = QTextEdit("""{"analystName": "Minos Niu",
+        #                              "gammaDyn": 100,
+        #                              "gammaSta": 100}
+        #                          """)
+        self.textbox = QTextEdit("""{"analystName": "zcwaxs"}
                                  """)
         self.textbox.selectAll()
         self.textbox.setMinimumWidth(200)
@@ -141,10 +143,10 @@ class Watcher(QMainWindow):
         self.ax1 = self.fig.add_subplot(211)
         self.ax2 = self.fig.add_subplot(212)
 
-        self.ax1.plot(self.currTrial['musLce0'])
-        self.ax1.set_ylim([0.5, 1.5])
-        self.ax2.plot(self.currTrial['emg0'])
-        self.ax2.set_ylim([-6.0, 6.0])
+        self.ax1.plot(self.currTrial['Left Shoulder Flex / Time'])
+        self.ax1.set_ylim([20, 120])
+        self.ax2.plot(self.currTrial['Biceps'])
+        self.ax2.set_ylim([-1.0, 1.0])
         self.canvas.draw()
 
     def setOnsetLine(self):
