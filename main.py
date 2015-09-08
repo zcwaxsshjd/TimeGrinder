@@ -4,8 +4,8 @@ from Freezer import Freezer
 import StringIO
 
 
-# myFreezer = Freezer('mongodb://localhost:27017/')
-myFreezer = Freezer('mongodb://diophantus.usc.edu:27017/')
+myFreezer = Freezer('mongodb://localhost:27017/')
+# myFreezer = Freezer('mongodb://diophantus.usc.edu:27017/')
 
 ## Provision the Freezer.processed collection
 for doc in myFreezer.posts.find():

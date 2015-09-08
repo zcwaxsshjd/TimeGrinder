@@ -43,6 +43,7 @@ class Watcher(QMainWindow):
         self.allTrials = []
         self.allAlignedTrials = []
         self.allOnsets = []
+        self.allIsAccepted = []
         self.queryStr = queryStr
 
         # allDocs = self.freezer.processed.find(eval(self.queryStr))
@@ -54,6 +55,9 @@ class Watcher(QMainWindow):
 
             t = 0#doc['timeOnset']
             self.allOnsets.append(t)
+            
+            t = doc['isAccepted']
+            self.allIsAccepted.append(t)
 
         self.numTrials = len(self.allTrials)
 
@@ -69,6 +73,19 @@ class Watcher(QMainWindow):
                 self.freezer.processed.update({'_id': doc['_id']},
                                               {'$set': {'timeOnset': onset}})
             print("Froze %d onsets" % len(self.allOnsets))
+        except:
+            print("Error updating")
+
+    def freezeAllIsAccepted(self):
+        """Freeze timeOnset field in Freezer
+        """
+        allDocs = self.freezer.processed.find(eval(self.queryStr))
+        try:
+            for isAccepted, doc in zip(self.allIsAccepted, allDocs):
+                print isAccepted, doc['_id']
+                self.freezer.processed.update({'_id': doc['_id']},
+                                              {'$set': {'isAccepted': isAccepted}})
+            print("Froze %d isAccepted flags" % len(self.allIsAccepted))
         except:
             print("Error updating")
 
@@ -110,6 +127,10 @@ class Watcher(QMainWindow):
         self.grid_cb.setChecked(False)
         # self.connect(self.grid_cb, SIGNAL('stateChanged(int)'), self.onGrid)
 
+        self.isAcceptedCB = QCheckBox("Accept?")
+        self.isAcceptedCB.setChecked(False)
+        self.connect(self.isAcceptedCB, SIGNAL('stateChanged(int)'), self.onChangeIsAccepted)
+        
         slider_label = QLabel('Bar width (%):')
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setRange(1, 100)
@@ -123,7 +144,7 @@ class Watcher(QMainWindow):
         #
         hbox = QHBoxLayout()
 
-        for w in [self.textbox, self.queryButton,
+        for w in [self.textbox, self.queryButton,self.isAcceptedCB, 
                   self.bwdButton, self.fwdButton, self.alignButton,
                   self.grid_cb, slider_label, self.slider]:
             hbox.addWidget(w)
@@ -181,6 +202,7 @@ class Watcher(QMainWindow):
         # print(len(self.allTrials))
         self.currTrial = self.allTrials[self.currTrialId]
         # print(self.currTrialId, len(self.currTrial))
+        self.isAcceptedCB.setChecked(self.allIsAccepted[self.currTrialId])
 
     def onFwd(self):
         """Go forward 1 trial"""
@@ -195,9 +217,13 @@ class Watcher(QMainWindow):
         self.drawCurrTrial()
         # self.setOnset()
         # self.setOnsetLine()
-
+    
+    def onChangeIsAccepted(self, value):            
+        self.allIsAccepted[self.currTrialId] = True if value == 2 else False
+        
     def onFinish(self):
         # self.freezeAllOnsets()
+        self.freezeAllIsAccepted()
         self.close()
 
     def onSubmit(self):
