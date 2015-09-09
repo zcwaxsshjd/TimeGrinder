@@ -23,10 +23,11 @@ class Watcher(QMainWindow):
         """Constructor for Viewer"""
         self.freezer = freezer
         self.numTrials = 0
-        self.currTrialId = 0
+        self.currTrialNum = 0
         self.allTrials = None
         self.allAlignedTrials = None
         self.allOnsets = None
+        self.idList = None
 
         # # Useful stuff
         self.onsetLine1 = None
@@ -40,24 +41,33 @@ class Watcher(QMainWindow):
     def queryData(self, queryStr):
         """Query some data from freezer
         """
+        
+        self.idList = []
+        
         self.allTrials = []
         self.allAlignedTrials = []
         self.allOnsets = []
-        self.allIsAccepted = []
+        
+        self.allQueryResults = {} # {'idxxx': {'var1':value1, 'var2':value2...}}
         self.queryStr = queryStr
 
         # allDocs = self.freezer.processed.find(eval(self.queryStr))
         allDocs = self.freezer.posts.find(eval(self.queryStr))
         for doc in allDocs:
             s = StringIO.StringIO(doc['trialData'])
-            t = pd.read_csv(s)
-            self.allTrials.append(t)
+            tTrialData = pd.read_csv(s)
+            self.allTrials.append(tTrialData)
 
             t = 0#doc['timeOnset']
             self.allOnsets.append(t)
             
-            t = doc['isAccepted']
-            self.allIsAccepted.append(t)
+            tId = StringIO.StringIO(doc['_id'])
+            self.idList.append(tId)
+            
+            self.allQueryResults[tId] = {
+                'isAccepted': doc['isAccepted'],
+                'trialData': tTrialData
+            }
 
         self.numTrials = len(self.allTrials)
 
@@ -81,7 +91,7 @@ class Watcher(QMainWindow):
         """
         allDocs = self.freezer.processed.find(eval(self.queryStr))
         try:
-            for isAccepted, doc in zip(self.allIsAccepted, allDocs):
+            for isAccepted, doc in zip(self.allQueryResults[self.idList[self.currTrialNum]]['isAccepted'], allDocs):
                 print isAccepted, doc['_id']
                 self.freezer.processed.update({'_id': doc['_id']},
                                               {'$set': {'isAccepted': isAccepted}})
@@ -194,32 +204,35 @@ class Watcher(QMainWindow):
             self.currOnset = possible[0]
         else:
             self.currOnset = len(self.currTrial) / 2
-        self.allOnsets[self.currTrialId] = self.currOnset
-        self.allAlignedTrials[self.currTrialId] = self.currTrial.drop(xrange(self.currOnset - 100))
+        self.allOnsets[self.currTrialNum] = self.currOnset
+        self.allAlignedTrials[self.currTrialNum] = self.currTrial.drop(xrange(self.currOnset - 100))
 
     def setCurrTrial(self, n=0):
-        self.currTrialId = n
+        self.currTrialNum = n
         # print(len(self.allTrials))
-        self.currTrial = self.allTrials[self.currTrialId]
-        # print(self.currTrialId, len(self.currTrial))
-        self.isAcceptedCB.setChecked(self.allIsAccepted[self.currTrialId])
+        self.currTrial = self.allTrials[self.currTrialNum]
+        # print(self.currTrialNum, len(self.currTrial))
+        self.isAcceptedCB.setChecked(self.allQueryResults[self.idList[n]]['isAccepted'])
 
     def onFwd(self):
         """Go forward 1 trial"""
-        self.setCurrTrial(min(self.currTrialId + 1, self.numTrials - 1))
+        self.setCurrTrial(min(self.currTrialNum + 1, self.numTrials - 1))
         self.drawCurrTrial()
         # self.setOnset()
         # self.setOnsetLine()
 
     def onBwd(self):
         """Go backward 1 trial"""
-        self.setCurrTrial(max(self.currTrialId - 1, 0))
+        self.setCurrTrial(max(self.currTrialNum - 1, 0))
         self.drawCurrTrial()
         # self.setOnset()
         # self.setOnsetLine()
     
     def onChangeIsAccepted(self, value):            
-        self.allIsAccepted[self.currTrialId] = True if value == 2 else False
+#        self.allIsAccepted[self.currTrialNum] = True if value == 2 else False
+        
+        self.allQueryResults[self.idList[self.currTrialNum]]['isAccepted'] = \
+            True if value == 2 else False
         
     def onFinish(self):
         # self.freezeAllOnsets()
