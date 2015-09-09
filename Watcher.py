@@ -61,7 +61,7 @@ class Watcher(QMainWindow):
             t = 0#doc['timeOnset']
             self.allOnsets.append(t)
             
-            tId = StringIO.StringIO(doc['_id'])
+            tId = doc['_id']
             self.idList.append(tId)
             
             self.allQueryResults[tId] = {
@@ -97,7 +97,19 @@ class Watcher(QMainWindow):
                                               {'$set': {'isAccepted': isAccepted}})
             print("Froze %d isAccepted flags" % len(self.allIsAccepted))
         except:
-            print("Error updating")
+            print("Error updating")            
+
+    def freezeAllQueryResults(self):
+        """Freeze timeOnset field in Freezer
+        """        
+        try:
+            for id in self.idList:
+                print id, {'isAccepted': self.allQueryResults[id]['isAccepted']}
+                self.freezer.processed.update({'_id': id},
+                                              {'$set': {'isAccepted': self.allQueryResults[id]['isAccepted']}})
+            print("Froze %d isAccepted flags" % len(self.idList))
+        except:
+            print("Error freezing")
 
     def createMainFrame(self):
         self.main_frame = QWidget()
@@ -110,19 +122,13 @@ class Watcher(QMainWindow):
 
         self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
 
-        # Other GUI controls
-        #
-        # self.textbox = QTextEdit("""{"analystName": "Minos Niu",
-        #                              "gammaDyn": 100,
-        #                              "gammaSta": 100}
-        #                          """)
         self.textbox = QTextEdit("""{"analystName": "zcwaxs"}
                                  """)
         self.textbox.selectAll()
         self.textbox.setMinimumWidth(200)
 
         self.queryButton = QPushButton("&Query")
-        self.connect(self.queryButton, SIGNAL('clicked()'), self.onSubmit)
+        self.connect(self.queryButton, SIGNAL('clicked()'), self.onSubmitQuery)
 
         self.fwdButton = QPushButton("&>>")
         self.connect(self.fwdButton, SIGNAL('clicked()'), self.onFwd)
@@ -229,17 +235,15 @@ class Watcher(QMainWindow):
         # self.setOnsetLine()
     
     def onChangeIsAccepted(self, value):            
-#        self.allIsAccepted[self.currTrialNum] = True if value == 2 else False
-        
         self.allQueryResults[self.idList[self.currTrialNum]]['isAccepted'] = \
             True if value == 2 else False
         
     def onFinish(self):
         # self.freezeAllOnsets()
-        self.freezeAllIsAccepted()
+        self.freezeAllQueryResults()
         self.close()
 
-    def onSubmit(self):
+    def onSubmitQuery(self):
         self.queryData(str(self.textbox.toPlainText()))
         self.setCurrTrial()
         self.drawCurrTrial()
