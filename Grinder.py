@@ -37,7 +37,7 @@ class Grinder(QMainWindow):
         self.iEnds = []
         self.currEndLine = None
         self.currEndLineId = None
-        self.baseChannel = 'Left Elbow Flex / Time'
+        self.baseChannel = 'Left Shoulder Flex / Time'
         self.isDragging = False
 
         QMainWindow.__init__(self, parent)

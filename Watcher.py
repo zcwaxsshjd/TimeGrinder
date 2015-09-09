@@ -16,6 +16,9 @@ import pandas as pd
 __author__ = 'minosniu'
 
 
+def indices(func, a):
+    return [i for (i, val) in enumerate(a) if func(val)]
+
 class Watcher(QMainWindow):
     """"""
 
@@ -201,38 +204,41 @@ class Watcher(QMainWindow):
         self.ax2.set_ylim([-1.0, 1.0])
                 
         ### Draw timeOnset lines
-        self.onsetLine1 = self.ax1.axvline(x=2, ymin=0, ymax=100, color='b', linewidth=5)
-        self.onsetLine2 = self.ax2.axvline(x=2, ymin=0, ymax=100, color='r', linewidth=5)
+        self.onsetLine1 = self.ax1.axvline(x=self.currOnset(), ymin=0, ymax=100, color='b', linewidth=5)
+        self.onsetLine2 = self.ax2.axvline(x=self.currOnset(), ymin=0, ymax=100, color='r', linewidth=5)
 
         
         self.canvas.draw()
+    
+    def currOnset(self):
+       return self.allQueryResults[self.idList[self.currTrialNum]]['timeOnset']
+
 
     def setOnset(self):
         """Add the field 'onset' to all documents"""
-        l = self.currTrial.musLce0[0:100]
+        l = self.currTrial['Left Shoulder Flex / Time'][0:800]
         base = sum(l) / float(len(l))
-        th = base * 1.02
-        f = lambda i: self.currTrial.musLce0[i] <= th <= self.currTrial.musLce0[min(len(self.currTrial) - 1, i + 1)]
-
-        possible = filter(f, range(len(self.currTrial.musLce0)))
-        if possible:
-            self.currOnset = possible[0]
-        else:
-            self.currOnset = len(self.currTrial) / 2
-        self.allOnsets[self.currTrialNum] = self.currOnset
-        self.allAlignedTrials[self.currTrialNum] = self.currTrial.drop(xrange(self.currOnset - 100))
-
-    def setOnsetLine1(self, artist):
+        th = base * 0.98
+        f = lambda x: x <= th
+        
+        possible = indices(f, self.currTrial['Left Shoulder Flex / Time'])
+        tOnset = possible[0]
+        self.allOnsets[self.currTrialNum] = tOnset
+        self.allQueryResults[self.idList[self.currTrialNum]]['timeOnset'] = int(tOnset)
+#        self.allAlignedTrials[self.currTrialNum] = self.currTrial.drop(xrange(self.currOnset - 100))
+        
+    def setPickedOnsetLine(self, artist):
         self.onsetLine1 = artist
         self.onsetLine1.set_color('g')
                 
     def setCurrTrial(self, n=0):
         self.currTrialNum = n
         # print(len(self.allTrials))
-        self.currTrial = self.allTrials[self.currTrialNum]
+        # self.currTrial = self.allTrials[self.currTrialNum]
+        self.currTrial = self.allQueryResults[self.idList[n]]['trialData']
         # print(self.currTrialNum, len(self.currTrial))
         self.isAcceptedCB.setChecked(self.allQueryResults[self.idList[n]]['isAccepted'])
-
+        self.setOnset()
 
     def setOnsetLine(self, new_x):
         xs, ys = self.onsetLine1.get_data()
@@ -243,7 +249,7 @@ class Watcher(QMainWindow):
         self.canvas.draw()
 
     def onPick(self, event):
-        self.setOnsetLine1(event.artist)
+        self.setPickedOnsetLine(event.artist)
         self.canvas.draw()
 
     def onMouseDown(self, event):
@@ -301,6 +307,7 @@ class Watcher(QMainWindow):
     def onSubmitQuery(self):
         self.queryData(str(self.textbox.toPlainText()))
         self.setCurrTrial()
+        
         self.drawCurrTrial()
         # self.setOnset()
         # self.setOnsetLine()
