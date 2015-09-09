@@ -32,6 +32,8 @@ class Watcher(QMainWindow):
         # # Useful stuff
         self.onsetLine1 = None
         self.onsetLine2 = None
+        
+        self.isDragging = False
 
         QMainWindow.__init__(self, parent)
         # self.showMaximized()
@@ -66,7 +68,8 @@ class Watcher(QMainWindow):
             
             self.allQueryResults[tId] = {
                 'isAccepted': doc['isAccepted'],
-                'trialData': tTrialData
+                'trialData': tTrialData,
+                'timeOnset': int(0.0)
             }
 
         self.numTrials = len(self.allTrials)
@@ -106,7 +109,8 @@ class Watcher(QMainWindow):
             for id in self.idList:
                 print id, {'isAccepted': self.allQueryResults[id]['isAccepted']}
                 self.freezer.processed.update({'_id': id},
-                                              {'$set': {'isAccepted': self.allQueryResults[id]['isAccepted']}})
+                                              {'$set': {'isAccepted': self.allQueryResults[id]['isAccepted'],
+                                                        'timeOnset': int(self.allQueryResults[id]['timeOnset'])}})
             print("Froze %d isAccepted flags" % len(self.idList))
         except:
             print("Error freezing")
@@ -121,6 +125,16 @@ class Watcher(QMainWindow):
         self.canvas.setFocus()
 
         self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
+
+        ### Linking some events        
+        self.canvas.mpl_connect('key_press_event', self.onKey)
+        self.canvas.mpl_connect('pick_event', self.onPick)
+        self.canvas.mpl_connect('button_press_event', self.onMouseDown)
+        self.canvas.mpl_connect('button_release_event', self.onMouseUp)
+        self.canvas.mpl_connect('motion_notify_event', self.onMouseMotion)
+
+
+
 
         self.textbox = QTextEdit("""{"analystName": "zcwaxs"}
                                  """)
@@ -153,6 +167,7 @@ class Watcher(QMainWindow):
         self.slider.setValue(20)
         self.slider.setTracking(True)
         self.slider.setTickPosition(QSlider.TicksBothSides)
+
         # self.connect(self.slider, SIGNAL('valueChanged(int)'), self.onSlider)
 
         #
@@ -184,18 +199,12 @@ class Watcher(QMainWindow):
         self.ax1.set_ylim([20, 120])
         self.ax2.plot(self.currTrial['Biceps'])
         self.ax2.set_ylim([-1.0, 1.0])
-        self.canvas.draw()
+                
+        ### Draw timeOnset lines
+        self.onsetLine1 = self.ax1.axvline(x=2, ymin=0, ymax=100, color='b', linewidth=5)
+        self.onsetLine2 = self.ax2.axvline(x=2, ymin=0, ymax=100, color='r', linewidth=5)
 
-    def setOnsetLine(self):
-        maxL = 100
-
-        if self.onsetLine1 in self.ax1.lines:
-            self.ax1.lines.remove(self.onsetLine1)
-        if self.onsetLine2 in self.ax2.lines:
-            self.ax2.lines.remove(self.onsetLine2)
-
-        self.onsetLine1 = self.ax1.axvline(self.currOnset, 0, maxL, color='r')
-        self.onsetLine2 = self.ax2.axvline(self.currOnset, 0, maxL, color='r')
+        
         self.canvas.draw()
 
     def setOnset(self):
@@ -213,12 +222,58 @@ class Watcher(QMainWindow):
         self.allOnsets[self.currTrialNum] = self.currOnset
         self.allAlignedTrials[self.currTrialNum] = self.currTrial.drop(xrange(self.currOnset - 100))
 
+    def setOnsetLine1(self, artist):
+        self.onsetLine1 = artist
+        self.onsetLine1.set_color('g')
+                
     def setCurrTrial(self, n=0):
         self.currTrialNum = n
         # print(len(self.allTrials))
         self.currTrial = self.allTrials[self.currTrialNum]
         # print(self.currTrialNum, len(self.currTrial))
         self.isAcceptedCB.setChecked(self.allQueryResults[self.idList[n]]['isAccepted'])
+
+
+    def setOnsetLine(self, new_x):
+        xs, ys = self.onsetLine1.get_data()
+        #new_xs = [min(rbound, max(lbound, new_x)) for xx in xs]
+        self.onsetLine1.set_data(new_x, ys)
+        self.onsetLine2.set_data(new_x, ys)
+        self.allQueryResults[self.idList[self.currTrialNum]]['timeOnset'] = new_x
+        self.canvas.draw()
+
+    def onPick(self, event):
+        self.setOnsetLine1(event.artist)
+        self.canvas.draw()
+
+    def onMouseDown(self, event):
+        self.isDragging = True
+
+    def onMouseUp(self, event):
+        self.isDragging = False
+
+    def onMouseMotion(self, event):
+        if self.isDragging:
+            self.setOnsetLine(event.xdata)
+            
+    def onKey(self, event):
+        if event.key in '[':
+            xs, ys = self.onsetLine1.get_data()
+            new_xs = [xx - 20 for xx in xs]
+            self.onsetLine1.set_data(new_xs, ys)
+        elif event.key in ']':
+            xs, ys = self.onsetLine1.get_data()
+            new_xs = [xx + 20 for xx in xs]
+            self.onsetLine1.set_data(new_xs, ys)
+        elif event.key in '{':
+            xs, ys = self.onsetLine1.get_data()
+            new_xs = [xx - 100 for xx in xs]
+            self.onsetLine1.set_data(new_xs, ys)
+        elif event.key in '}':
+            xs, ys = self.onsetLine1.get_data()
+            new_xs = [xx + 100 for xx in xs]
+            self.onsetLine1.set_data(new_xs, ys)
+        self.canvas.draw()
 
     def onFwd(self):
         """Go forward 1 trial"""
