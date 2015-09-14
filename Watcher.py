@@ -10,6 +10,8 @@ from matplotlib.backends.backend_qt4agg import (
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from scipy.io import savemat
+
 from Freezer import Freezer
 import pandas as pd
 
@@ -152,6 +154,9 @@ class Watcher(QMainWindow):
 
         self.bwdButton = QPushButton("&<<")
         self.connect(self.bwdButton, SIGNAL('clicked()'), self.onBwd)
+        
+        self.saveButton = QPushButton("&Save")
+        self.connect(self.saveButton, SIGNAL('clicked()'), self.onSave)
 
         self.alignButton = QPushButton("&Close")
         self.connect(self.alignButton, SIGNAL('clicked()'), self.onFinish)
@@ -179,7 +184,7 @@ class Watcher(QMainWindow):
         hbox = QHBoxLayout()
 
         for w in [self.textbox, self.queryButton,self.isAcceptedCB, 
-                  self.bwdButton, self.fwdButton, self.alignButton,
+                  self.bwdButton, self.fwdButton, self.saveButton, self.alignButton,
                   self.grid_cb, slider_label, self.slider]:
             hbox.addWidget(w)
             hbox.setAlignment(w, Qt.AlignVCenter)
@@ -298,11 +303,19 @@ class Watcher(QMainWindow):
     def onChangeIsAccepted(self, value):            
         self.allQueryResults[self.idList[self.currTrialNum]]['isAccepted'] = \
             True if value == 2 else False
-        
+
     def onFinish(self):
         # self.freezeAllOnsets()
         self.freezeAllQueryResults()
         self.close()
+
+    def onSave(self):
+        # self.freezeAllOnsets()
+        print self.currTrialNum
+        print self.currOnset()
+        tDataFrame = self.allQueryResults[self.idList[self.currTrialNum]]['trialData']
+        tDataFrame = tDataFrame.drop(xrange(self.currOnset() - 500))
+        tDataFrame.to_csv('%d.csv' % self.currTrialNum)
 
     def onSubmitQuery(self):
         self.queryData(str(self.textbox.toPlainText()))
