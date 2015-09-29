@@ -28,6 +28,7 @@ class Grinder(QMainWindow):
         self.patientName = metaData['patientName']
         self.sideTested = metaData['sideTested']
         self.movementType = metaData['movementType']
+        self.uuidId = metaData['uuidId']
         # self.gammaDyn = gammaDyn
         # self.gammaSta = gammaSta
 
@@ -161,20 +162,22 @@ class Grinder(QMainWindow):
         self.allTraces = [self.rawData[self.iBegins[i]: self.iEnds[i]].reset_index() for i in xrange(self.numTrials)]
 
     def freezeAllTrials(self):
+
         try:
             for eachTrial in self.allTraces:
                 self.freezer.freezeTrialDict({
                     'expName': self.expName,
                     'expDate': self.expDate,
-                    'trialData': eachTrial,
+                    'trialUuid': self.uuidId,
                     'analystName': self.analystName,
                     'patientName': self.patientName,
                     'sideTested': self.sideTested,
-                    'movementType': self.movementType})
+                    'movementType': self.movementType}) 
+
         except:
-            print("Error when writing to database")
+            print("Error:", sys.exc_info()[0])
         finally:
-            print("Successfully froze %d pieces of cadaver." % self.numTrials)
+            print("Attempted to freeze %d pieces of cadaver." % self.numTrials)
 
     def setFreezer(self, someFreezer):
         self.freezer = someFreezer
@@ -267,6 +270,7 @@ if __name__ == "__main__":
     patient = sys.argv[6]
     side = sys.argv[7]
     movement = sys.argv[8]
+    u = sys.argv[9]
 
 
     myFreezer = Freezer(addr)
@@ -279,7 +283,8 @@ if __name__ == "__main__":
         'analystName': analyst,
         'patientName': patient,
         'sideTested': side,
-        'movementType': movement})
+        'movementType': movement,
+        'uuidId': u})
     cadGrinder.setFreezer(myFreezer)
 
     cadGrinder.show()

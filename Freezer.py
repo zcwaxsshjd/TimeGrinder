@@ -42,14 +42,7 @@ class Freezer():
     #         print "%s: Could not connect to MongoDB: %s" % (e, addr)
 
     def freezeTrialDict(self, origTrial):
-        trialData = origTrial['trialData']
-        
-        s = StringIO.StringIO()
-        trialData.to_csv(s)
-        serialData = s.getvalue()
-
         newTrial = origTrial
-        newTrial['trialData'] = serialData
         newTrial['isAccepted']= True
         
         try:
