@@ -2,15 +2,15 @@ __author__ = 'minosniu'
 import sys
 import os
 
-path_root = 'D:\\S1_lateral_reaching'
+path_root = 'D:\\S2_L_forward_reaching'
 
 expt = 'FES_reaching'
-date = '20150909'
+date = '20150929'
 analyst = 'zcwaxs'
 addr = 'mongodb://localhost:27017/'
-patient = 'YJZ'
+patient = 'CXM'
 side = 'left'
-movement = 'lateral_reaching'
+movement = 'forward_reaching'
 
 if __name__ == '__main__':
     path = path_root

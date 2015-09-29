@@ -37,7 +37,7 @@ class Grinder(QMainWindow):
         self.iEnds = []
         self.currEndLine = None
         self.currEndLineId = None
-        self.baseChannel = 'Left Shoulder Flex / Time'
+        self.baseChannel = 'Left Elbow Flex / Time'
         self.isDragging = False
 
         QMainWindow.__init__(self, parent)
@@ -73,7 +73,7 @@ class Grinder(QMainWindow):
         #
         self.numTrialBox = QSpinBox()
         self.numTrialBox.setMinimum(1)
-        self.numTrialBox.setValue(2)
+        self.numTrialBox.setValue(1)
         self.numTrialBox.setMinimumWidth(200)
         self.connect(self.numTrialBox, SIGNAL('valueChanged(int)'), self.onNumTrialBox)
 

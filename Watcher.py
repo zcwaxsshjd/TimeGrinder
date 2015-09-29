@@ -203,8 +203,8 @@ class Watcher(QMainWindow):
         self.ax1 = self.fig.add_subplot(211)
         self.ax2 = self.fig.add_subplot(212)
 
-        self.ax1.plot(self.currTrial['Left Shoulder Flex / Time'])
-        self.ax1.set_ylim([20, 120])
+        self.ax1.plot(self.currTrial['Left Elbow Flex / Time'])
+        self.ax1.set_ylim([10, 130])
         self.ax2.plot(self.currTrial['Biceps'])
         self.ax2.set_ylim([-1.0, 1.0])
                 
@@ -221,12 +221,12 @@ class Watcher(QMainWindow):
 
     def setOnset(self):
         """Add the field 'onset' to all documents"""
-        l = self.currTrial['Left Shoulder Flex / Time'][0:800]
+        l = self.currTrial['Left Elbow Flex / Time'][0:800]
         base = sum(l) / float(len(l))
         th = base * 0.98
         f = lambda x: x <= th
         
-        possible = indices(f, self.currTrial['Left Shoulder Flex / Time'])
+        possible = indices(f, self.currTrial['Left Elbow Flex / Time'])
         tOnset = possible[0]
         self.allOnsets[self.currTrialNum] = tOnset
         self.allQueryResults[self.idList[self.currTrialNum]]['timeOnset'] = int(tOnset)
@@ -314,8 +314,8 @@ class Watcher(QMainWindow):
         print self.currTrialNum
         print self.currOnset()
         tDataFrame = self.allQueryResults[self.idList[self.currTrialNum]]['trialData']
-        tDataFrame = tDataFrame.drop(xrange(self.currOnset() - 500))
-        tDataFrame.to_csv('%d.csv' % self.currTrialNum)
+        tDataFrame = tDataFrame.drop(xrange(self.currOnset() - 1500))
+        tDataFrame.to_csv('D:\Code\local_timegrinder\ProcessedData\S2\FES_S02_L_FR_T%d.csv' % (self.currTrialNum+1))
 
     def onSubmitQuery(self):
         self.queryData(str(self.textbox.toPlainText()))
